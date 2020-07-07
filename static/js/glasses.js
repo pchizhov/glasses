@@ -55,32 +55,21 @@ let my_models = [];
 
 const modelName = document.getElementById("modelName").textContent;
 
-loader.load(`static/glasses_models/${modelName}_width.glb`, width_load);
-loader.load(`static/glasses_models/${modelName}_left.glb`, left_load);
-loader.load(`static/glasses_models/${modelName}_right.glb`, right_load);
-
 var mesh_width;
 var mesh_left;
 var mesh_right;
 
-function width_load(gltf) {
-    mesh = gltf.scene;
-    var lenses_number;
-    for (let i = 0; i < 2; i++) {
-        if (mesh.children[i].name == "lenses") {
-            lenses_number = i;
-        }
-    }
-    mesh.children[lenses_number].material = new THREE.MeshLambertMaterial({
-        color: new THREE.Color().setHex(0xA4ACDD),
-        opacity: 0.4,
-        transparent: true
-    });
-    mesh_width = mesh;
-    // my_models.push(mesh);
-}
+loader.load(`static/glasses_models/${modelName}_width.glb`, function (gltf) {
+    mesh_width = material(gltf);
+});
+loader.load(`static/glasses_models/${modelName}_left.glb`, function (gltf) {
+    mesh_left = material(gltf);
+});
+loader.load(`static/glasses_models/${modelName}_right.glb`, function (gltf) {
+    mesh_right = material(gltf);
+});
 
-function left_load(gltf) {
+function material(gltf) {
     mesh = gltf.scene;
     var lenses_number;
     for (let i = 0; i < 2; i++) {
@@ -93,25 +82,7 @@ function left_load(gltf) {
         opacity: 0.4,
         transparent: true
     });
-    // my_models.push(mesh);
-    mesh_left = mesh;
-}
-
-function right_load(gltf) {
-    mesh = gltf.scene;
-    var lenses_number;
-    for (let i = 0; i < 2; i++) {
-        if (mesh.children[i].name == "lenses") {
-            lenses_number = i;
-        }
-    }
-    mesh.children[lenses_number].material = new THREE.MeshLambertMaterial({
-        color: new THREE.Color().setHex(0xA4ACDD),
-        opacity: 0.4,
-        transparent: true
-    });
-    mesh_right = mesh;
-    // my_models.push(mesh);
+    return mesh;
 }
 
 
