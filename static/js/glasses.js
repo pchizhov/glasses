@@ -113,38 +113,40 @@ function scale(leftEye, rightEye) {
     return (length - 160) / 2;
 }
 
+var mesh;
 function render(leftEye, rightEye, jaw) {
-    if (!mesh) {
-        mesh = my_models[0];
-        scene.add(my_models[0]);
+    if (!mesh){
+        mesh = mesh_width;
+        scene.add(mesh);
     }
 
     if (Math.abs(rotationY(leftEye, rightEye, jaw) - 0.06) < 0.05) {
-        while (scene.children.length > 0) {
+        while(scene.children.length > 0){
             scene.remove(scene.children[0]);
         }
-        scene.add(my_models[0]);
+        mesh = mesh_width;
         scene.add(mesh);
     } else {
-        if (rotationY(leftEye, rightEye, jaw) > 0.06) {
-            while (scene.children.length > 0) {
+        if (rotationY(leftEye, rightEye, jaw) > 0.06){
+            while(scene.children.length > 0){
                 scene.remove(scene.children[0]);
             }
-            mesh = my_models[1];
+            mesh = mesh_left;
             scene.add(mesh);
         } else {
-            while (scene.children.length > 0) {
+            while(scene.children.length > 0){
                 scene.remove(scene.children[0]);
             }
-            mesh = my_models[2];
+            mesh = mesh_right;
             scene.add(mesh);
+
         }
     }
 
     if (mesh) {
         const x = (leftEye._x + rightEye._x) / 2;
         const y = (leftEye._y + rightEye._y) / 2;
-        mesh.position.y = -y / 560 * 100 + 72;
+        mesh.position.y = - y / 560 * 100 + 72;
         mesh.position.x = x / 720 * 100 - 50;
         mesh.rotation.x = rotationX(leftEye, rightEye, jaw);
         mesh.rotation.y = rotationY(leftEye, rightEye, jaw);
@@ -153,8 +155,10 @@ function render(leftEye, rightEye, jaw) {
     }
     renderer.render(scene, camera);
 
+
     // requestAnimationFrame(render);
 }
+
 
 video.addEventListener('play', () => {
     const canvas = faceapi.createCanvasFromMedia(video)
