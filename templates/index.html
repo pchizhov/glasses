@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block head %}
+    {{ super() }}
+{% endblock %}
+{% block body %}
+    <div class="container col-md-6">
+        <div class="jumbotron text-center">
+            <form action="/" method="POST">
+                <h3>Pick a model</h3>
+                <div class="form-group input-group">
+                    <select class="form-control" name="model">
+                        {% for model in models %}
+                        <option value="{{ model }}">{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group">
+                    <input type="submit" name="submit-button" class="btn btn-outline-success" value="Поехали!">
+                </div>
+            </form>
+        </div>
+    </div>
+    {% if model %}
+    <script src="{{ url_for('static', filename='js/libs/face-api.min.js') }}"></script>
+    <video id="video" width="720" height="560" autoplay muted></video>
+    <canvas id="canvas" width="720" height="560"></canvas>
+    <div id="modelName" hidden>{{ model }}</div>
+    <script src="{{ url_for('static', filename='js/libs/three.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/libs/GLTFLoader.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/keyboard.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/glasses.js') }}"></script>
+    {% endif %}
+{% endblock %}
