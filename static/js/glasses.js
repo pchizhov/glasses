@@ -4,7 +4,7 @@ Promise.all([
     faceapi.nets.tinyFaceDetector.loadFromUri('static/models/tiny_face_detector_model-weights_manifest.json'),
     faceapi.nets.faceLandmark68Net.loadFromUri('static/models/face_landmark_68_model-weights_manifest.json'),
     faceapi.nets.faceRecognitionNet.loadFromUri('static/models/face_recognition_model-weights_manifest.json')
-]).then(startVideo)
+]).then(startVideo);
 
 function startVideo() {
     navigator.getUserMedia(
@@ -154,23 +154,21 @@ function render(leftEye, rightEye, jaw) {
         mesh.position.z = scale(leftEye, rightEye);
     }
     renderer.render(scene, camera);
-
-
     // requestAnimationFrame(render);
 }
 
 
 video.addEventListener('play', () => {
-    const canvas = faceapi.createCanvasFromMedia(video)
-    document.body.append(canvas)
-    const displaySize = {width: video.width, height: video.height}
-    faceapi.matchDimensions(canvas, displaySize)
+    const canvas = faceapi.createCanvasFromMedia(video);
+    // document.body.append(canvas)
+    const displaySize = {width: video.width, height: video.height};
+    faceapi.matchDimensions(canvas, displaySize);
 
     setInterval(async () => {
         const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
         const resizedDetections = faceapi.resizeResults(detections, displaySize)
 
-        canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
+        // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
         // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
 
 
@@ -209,40 +207,41 @@ video.addEventListener('play', () => {
             //     }
             // }
 
-            if (canvas.getContext) {
+            // if (canvas.getContext) {
+            //     const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
+            //     const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
+            //     const jaw = [resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
+            //     render(leftEye, rightEye, jaw);
+            // }
+            //
+            //
+            // const text = ['x = 0', 'y = 0']
+            // const anchor = {x: 0, y: 0}
+            // const drawOptions = {
+            //     anchorPosition: 'TOP_LEFT',
+            //     backgroundColor: 'rgba(0, 0, 0, 0.5)'
+            // }
+            // const drawBox = new faceapi.draw.DrawTextField(text, anchor, drawOptions)
+            // drawBox.draw(canvas)
+            //
+            // const text2 = ['x = 720', 'y = 0']
+            // const anchor2 = {x: 700, y: 0}
+            // const drawOptions2 = {
+            //     anchorPosition: 'TOP_LEFT',
+            //     backgroundColor: 'rgba(0, 0, 0, 0.5)'
+            // }
+            // const drawBox2 = new faceapi.draw.DrawTextField(text2, anchor2, drawOptions2);
+            // drawBox2.draw(canvas)
+
+            const animate = () => {
+                requestAnimationFrame(animate);
                 const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
                 const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
                 const jaw = [resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
                 render(leftEye, rightEye, jaw);
             }
 
-
-            const text = ['x = 0', 'y = 0']
-            const anchor = {x: 0, y: 0}
-            const drawOptions = {
-                anchorPosition: 'TOP_LEFT',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)'
-            }
-            const drawBox = new faceapi.draw.DrawTextField(text, anchor, drawOptions)
-            drawBox.draw(canvas)
-
-            const text2 = ['x = 720', 'y = 0']
-            const anchor2 = {x: 700, y: 0}
-            const drawOptions2 = {
-                anchorPosition: 'TOP_LEFT',
-                backgroundColor: 'rgba(0, 0, 0, 0.5)'
-            }
-            const drawBox2 = new faceapi.draw.DrawTextField(text2, anchor2, drawOptions2);
-            drawBox2.draw(canvas)
-
-            const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
-            const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
-            const jaw = [resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
-
-            render(leftEye, rightEye, jaw);
-
-
-            // animate();
+            animate();
         }
-    }, 300)
+    }, 100)
 });
