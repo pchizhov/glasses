@@ -15,6 +15,3 @@ def index():
     if request.method == 'POST':
         return render_template('index.html', model=models[request.form.get('model')], models=models.keys())
     return render_template('index.html', models=models.keys())
-
-
-app.run()

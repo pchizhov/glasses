@@ -1,11 +1,7 @@
 const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
 
-Promise.all([
-    faceapi.nets.tinyFaceDetector.loadFromUri('static/models/tiny_face_detector_model-weights_manifest.json'),
-    faceapi.nets.faceLandmark68Net.loadFromUri('static/models/face_landmark_68_model-weights_manifest.json'),
-    faceapi.nets.faceRecognitionNet.loadFromUri('static/models/face_recognition_model-weights_manifest.json')
-]).then(startVideo);
-
+// function for streaming webcam video
 function startVideo() {
     navigator.getUserMedia(
         {video: {}},
@@ -14,14 +10,18 @@ function startVideo() {
     )
 }
 
-var renderer,
-    scene,
-    camera,
-    myCanvas = document.getElementById('canvas');
+// loading face-api models
+Promise.all([
+    faceapi.nets.tinyFaceDetector.loadFromUri('static/models/tiny_face_detector_model-weights_manifest.json'),
+    faceapi.nets.faceLandmark68Net.loadFromUri('static/models/face_landmark_68_model-weights_manifest.json'),
+    faceapi.nets.faceRecognitionNet.loadFromUri('static/models/face_recognition_model-weights_manifest.json')
+]).then(startVideo);
 
-//RENDERER
+// three.js renderer, camera and scene
+let renderer, camera, scene;
+
 renderer = new THREE.WebGLRenderer({
-    canvas: myCanvas,
+    canvas: canvas,
     antialias: true,
     transparent: true
 });
@@ -29,51 +29,44 @@ renderer.setClearColor(0x000000, 0);
 renderer.setPixelRatio(window.devicePixelRatio);
 renderer.setSize(720, 560);
 
-//CAMERA
 camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.01, 5000);
-// camera.rotation.y = 45/180*Math.Pi;
-// camera.position.x = 800;
 camera.position.y = 30;
 camera.position.z = 70;
 
-//SCENE
 scene = new THREE.Scene();
 
-var vidTexture = new THREE.VideoTexture(video);
-scene.background = vidTexture;
-
-
-//LIGHTS
-var light = new THREE.AmbientLight(0xffffff, 0.5);
+// adding lights to the scene
+const light = new THREE.AmbientLight(0xffffff, 0.5);
 scene.add(light);
 
-var light2 = new THREE.PointLight(0xffffff, 0.5);
+const light2 = new THREE.PointLight(0xffffff, 0.5);
 scene.add(light2);
 
-var loader = new THREE.GLTFLoader();
-let my_models = [];
+// set webcam video texture as background
+let vidTexture = new THREE.VideoTexture(video);
+scene.background = vidTexture;
 
+// loading glasses projection models by model name
 const modelName = document.getElementById("modelName").textContent;
-
-var mesh_width;
-var mesh_left;
-var mesh_right;
+const loader = new THREE.GLTFLoader();
+let meshWidth, meshLeft, meshRight;
 
 loader.load(`static/glasses_models/${modelName}_width.glb`, function (gltf) {
-    mesh_width = material(gltf);
+    meshWidth = material(gltf);
 });
 loader.load(`static/glasses_models/${modelName}_left.glb`, function (gltf) {
-    mesh_left = material(gltf);
+    meshLeft = material(gltf);
 });
 loader.load(`static/glasses_models/${modelName}_right.glb`, function (gltf) {
-    mesh_right = material(gltf);
+    meshRight = material(gltf);
 });
 
+// loading glasses model as material
 function material(gltf) {
     mesh = gltf.scene;
-    var lenses_number;
+    let lenses_number;
     for (let i = 0; i < 2; i++) {
-        if (mesh.children[i].name == "lenses") {
+        if (mesh.children[i].name === "lenses") {
             lenses_number = i;
         }
     }
@@ -85,14 +78,7 @@ function material(gltf) {
     return mesh;
 }
 
-
-keyboard = new KeyboardState();
-
-
-//RENDER LOOP
-var delta = 0;
-var prevTime = Date.now();
-
+// functions for calculating rotation and scale based on landmarks
 function rotationX(leftEye, rightEye, jaw) {
     const nod = leftEye._y - jaw[0]._y;
     return nod * Math.PI / 450;
@@ -113,36 +99,34 @@ function scale(leftEye, rightEye) {
     return (length - 160) / 2;
 }
 
-var mesh;
+// rendering materials based on the rotation
+let mesh;
 function render(leftEye, rightEye, jaw) {
     if (!mesh){
-        mesh = mesh_width;
+        mesh = meshWidth;
         scene.add(mesh);
     }
-
     if (Math.abs(rotationY(leftEye, rightEye, jaw) - 0.06) < 0.05) {
         while(scene.children.length > 0){
             scene.remove(scene.children[0]);
         }
-        mesh = mesh_width;
+        mesh = meshWidth;
         scene.add(mesh);
     } else {
         if (rotationY(leftEye, rightEye, jaw) > 0.06){
             while(scene.children.length > 0){
                 scene.remove(scene.children[0]);
             }
-            mesh = mesh_left;
+            mesh = meshLeft;
             scene.add(mesh);
         } else {
             while(scene.children.length > 0){
                 scene.remove(scene.children[0]);
             }
-            mesh = mesh_right;
+            mesh = meshRight;
             scene.add(mesh);
-
         }
     }
-
     if (mesh) {
         const x = (leftEye._x + rightEye._x) / 2;
         const y = (leftEye._y + rightEye._y) / 2;
@@ -154,94 +138,23 @@ function render(leftEye, rightEye, jaw) {
         mesh.position.z = scale(leftEye, rightEye);
     }
     renderer.render(scene, camera);
-    // requestAnimationFrame(render);
 }
 
-
+// detecting face landmarks on video with face-api and calling render function of detected landmarks
 video.addEventListener('play', () => {
-    const canvas = faceapi.createCanvasFromMedia(video);
-    // document.body.append(canvas)
     const displaySize = {width: video.width, height: video.height};
-    faceapi.matchDimensions(canvas, displaySize);
-
     setInterval(async () => {
-        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks()
-        const resizedDetections = faceapi.resizeResults(detections, displaySize)
-
-        // canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height)
-        // faceapi.draw.drawFaceLandmarks(canvas, resizedDetections)
-
-
+        const detections = await faceapi.detectAllFaces(video, new faceapi.TinyFaceDetectorOptions()).withFaceLandmarks();
+        const resizedDetections = faceapi.resizeResults(detections, displaySize);
         if (resizedDetections[0]) {
-            // console.log(JSON.stringify(resizedDetections))
-            // console.log(resizedDetections[0].landmarks._positions[36]._x)
-            // const leftEye = resizedDetections.getLeftEye() //36, 42
-            // const rightEye = resizedDetections.getRightEye() //42, 48
-            // const leftBrow = resizedDetections.getLeftEyeBrow()
-            // const righBrow = resizedDetections.getRightEyeBrow()
-            // const jawOutline = detections.getJawOutline()
-            // console.log("Left Eye landmarks ===========>" + Math.round(leftEye[0].x) + " " + Math.round(leftEye[0].y));
-            // console.log("Right Eye landmarks ===========>" + JSON.stringify(rightEye));
-
-            // if (canvas.getContext) {
-            //     let ctx = canvas.getContext('2d');
-            //
-            //     // console.log(JSON.stringify(singleFace))
-            //
-            //     for (let i = 0; i < 6; i++){
-            //         try {
-            //             let landmarks = singleFace.landmarks;
-            //             let left_x = Math.round(landmarks._positions[36+i]._x);
-            //             let left_y = Math.round(landmarks._positions[36+i]._y);
-            //             ctx.fillRect(left_x, left_y, 5, 5);
-            //             let right_x = Math.round(landmarks._positions[42+i]._x);
-            //             let right_y = Math.round(landmarks._positions[42+i]._y);
-            //             ctx.fillRect(right_x,right_y, 5, 5);
-            //         } catch(e) {
-            //             // console.log(e)
-            //         }
-            //
-            //
-            //
-            //         // console.log(left_x, left_y)
-            //     }
-            // }
-
-            // if (canvas.getContext) {
-            //     const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
-            //     const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
-            //     const jaw = [resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
-            //     render(leftEye, rightEye, jaw);
-            // }
-            //
-            //
-            // const text = ['x = 0', 'y = 0']
-            // const anchor = {x: 0, y: 0}
-            // const drawOptions = {
-            //     anchorPosition: 'TOP_LEFT',
-            //     backgroundColor: 'rgba(0, 0, 0, 0.5)'
-            // }
-            // const drawBox = new faceapi.draw.DrawTextField(text, anchor, drawOptions)
-            // drawBox.draw(canvas)
-            //
-            // const text2 = ['x = 720', 'y = 0']
-            // const anchor2 = {x: 700, y: 0}
-            // const drawOptions2 = {
-            //     anchorPosition: 'TOP_LEFT',
-            //     backgroundColor: 'rgba(0, 0, 0, 0.5)'
-            // }
-            // const drawBox2 = new faceapi.draw.DrawTextField(text2, anchor2, drawOptions2);
-            // drawBox2.draw(canvas)
-
             const animate = () => {
                 requestAnimationFrame(animate);
                 const leftEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getLeftEye());
                 const rightEye = faceapi.getCenterPoint(resizedDetections[0].landmarks.getRightEye());
                 const jaw = [resizedDetections[0].landmarks.getJawOutline()[0], resizedDetections[0].landmarks.getJawOutline()[16]];
                 render(leftEye, rightEye, jaw);
-            }
-
+            };
             animate();
         }
-    }, 100)
+    }, 50)
 });
