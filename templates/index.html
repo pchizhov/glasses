@@ -18,12 +18,12 @@
         </div>
     </div>
     {% if model %}
-    <canvas id="canvas" width="720" height="560"></canvas>
-    <video id="video" width="720" height="560" autoplay></video>
-    <div id="modelName" hidden>{{ model }}</div>
-    <script src="{{ url_for('static', filename='js/libs/face-api.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/libs/three.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/libs/GLTFLoader.js') }}"></script>
-    <script src="{{ url_for('static', filename='js/glasses.js') }}"></script>
+        <canvas id="canvas" width="720" height="560"></canvas>
+        <video id="video" width="720" height="560" autoplay></video>
+        <div id="modelName" hidden>{{ model }}</div>
+        <script src="{{ url_for('static', filename='js/libs/face-api.min.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/libs/three.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/libs/GLTFLoader.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/glasses.js') }}"></script>
     {% endif %}
 {% endblock %}
